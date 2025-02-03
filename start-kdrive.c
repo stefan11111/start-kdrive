@@ -8,9 +8,6 @@
 
 #include "config.h"
 
-#define STR_(x) #x
-#define STR(x) STR_(x)
-
 #define EVDEV_ "evdev,,device=/dev/input/event"
 #define EVDEV EVDEV_ "xxx"
 #define EVDEVPOS (sizeof(EVDEV_) - 1)
@@ -71,6 +68,8 @@ static int _getline(char *out)
 static int read_evdev(char *evdev)
 {
     char p[SIZE_MAX + 1];
+    char ignore_kbd = 0;
+    char ignore_mouse = 0;
     for (;;) {
         if (_getline(p) == EOF) { /* read all evdev devices */
             return EOF;
@@ -78,21 +77,35 @@ static int read_evdev(char *evdev)
         if (*p == '\0') { /* finished reading the evdev device but found nothing */
             return EVDEV_NONE;
         }
-        char *ptr = strstr(p, "Handlers");
-        if (ptr) {
-            char *q = strstr(ptr, "event");
+        if (*p == 'N') { /* N: Name="..." */
+            int i;
+            for (i = 0; ignore_keyoards[0] && i < sizeof(ignore_keyoards)/sizeof(*ignore_keyoards); i++) {
+                if (ignore_keyoards[i] && strstr(p, ignore_keyoards[i])) {
+                    ignore_kbd = 1;
+                    break;
+                }
+            }
+            for (i = 0; ignore_mice[0] && i < sizeof(ignore_mice)/sizeof(*ignore_mice); i++) {
+                if (ignore_mice[i] && strstr(p, ignore_mice[i])) {
+                    ignore_mouse = 1;
+                    break;
+                }
+            }
+        }
+        if (*p == 'H') { /* H: Handlers=... */
+            char *q = strstr(p, "event");
             if (q) {
                 q += sizeof("event") - 1;
                 EVDEV_STRCPY(evdev, q);
             }
-            if (strstr(ptr, "mouse")) {
-                return EVDEV_MOUSE;
+            if (strstr(p, "mouse")) {
+                return ignore_mouse ? EVDEV_NONE : EVDEV_MOUSE;
             }
             continue;
         }
-        ptr = strstr(p, "EV=");
+        char *ptr = strstr(p, "EV=");
         if (ptr && ((atoi(ptr + sizeof("EV=") - 1) & KBD_EV) == KBD_EV)) {
-            return EVDEV_KEYBOARD;
+            return ignore_kbd ? EVDEV_NONE : EVDEV_KEYBOARD;
         }
     }
     /* never reached */
