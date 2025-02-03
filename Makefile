@@ -1,7 +1,7 @@
 .POSIX:
 
 all:
-	${CC} ${CFLAGS} ${LDFLAGS} start-kdrive.c -o start-kdrive
+	${CC} ${CFLAGS} -std=c99 ${LDFLAGS} start-kdrive.c -o start-kdrive
 
 install:
 	mkdir -p ${DESTDIR}/usr/bin

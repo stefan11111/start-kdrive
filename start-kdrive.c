@@ -1,4 +1,4 @@
-/* xinit wrapper that searces for keyboard and mouse event devices and starts Xfbdev */
+/* xinit wrapper that searces for keyboard and mouse event devices */
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -6,8 +6,7 @@
 #include <unistd.h>
 #include <fcntl.h>
 
-/* increase if this causes problems */
-#define SIZE_MAX 512
+#include "config.h"
 
 #define STR_(x) #x
 #define STR(x) STR_(x)
