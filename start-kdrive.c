@@ -20,7 +20,7 @@ static char kbdevdev[] = EVDEV;
 #define MOUSE_SET (mouseevdev[EVDEVPOS] != 'x')
 #define KBD_SET (kbdevdev[EVDEVPOS] != 'x')
 
-#define KBD_EV 120013
+#define KBD_EV (0x120013)
 
 enum {
     EVDEV_NONE = 0,
@@ -104,7 +104,7 @@ static int read_evdev(char *evdev)
             continue;
         }
         char *ptr = strstr(p, "EV=");
-        if (ptr && ((atoi(ptr + sizeof("EV=") - 1) & KBD_EV) == KBD_EV)) {
+        if (ptr && ((strtol(ptr + sizeof("EV=") - 1, NULL, 16) & KBD_EV) == KBD_EV)) {
             return ignore_kbd ? EVDEV_NONE : EVDEV_KEYBOARD;
         }
     }
