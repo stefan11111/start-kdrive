@@ -142,7 +142,7 @@ int main(int argc, char **argv)
     }
 
     /* free()'d at return from main() */
-    char **av = malloc(argc + 1 + sizeof((char*[]){"xinit", "--", "-mouse", mouseevdev, "-keybd", kbdevdev, NULL}) + 1);
+    char **av = malloc((argc + 1) * sizeof(char*) + sizeof((char*[]){"xinit", "--", "-mouse", mouseevdev, "-keybd", kbdevdev, NULL}) + sizeof(char*));
     av[0] = "xinit";
     argc = argc ? argc - 1 : 0;
     memcpy(av + 1, argv + 1, argc * sizeof(*av));
