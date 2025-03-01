@@ -17,15 +17,23 @@
 static char mouseevdev[] = EVDEV;
 static char kbdevdev[] = EVDEV;
 
-#define MOUSE_SET (mouseevdev[EVDEVPOS] != 'x')
-#define KBD_SET (kbdevdev[EVDEVPOS] != 'x')
+#define MOUSE_SET_ (mouseevdev[EVDEVPOS] != 'x')
+#define KBD_SET_ (kbdevdev[EVDEVPOS] != 'x')
 
 #define KBD_EV (0x120013)
 
 enum {
+    KBD_OFFSET = 0,
+    MOUSE_OFFSET = 1,
+};
+
+#define MOUSE_SET (MOUSE_SET_ << MOUSE_OFFSET)
+#define KBD_SET (KBD_SET_ << KBD_OFFSET)
+
+enum {
     EVDEV_NONE = 0,
-    EVDEV_KEYBOARD = 1 << 0,
-    EVDEV_MOUSE = 1 << 1,
+    EVDEV_KEYBOARD = 1 << KBD_OFFSET,
+    EVDEV_MOUSE = 1 << MOUSE_OFFSET,
 };
 
 #define EVDEV_STRCPY(dst, src) \
@@ -129,7 +137,7 @@ int main(int argc, char **argv)
         evdev_type = read_evdev(evdev);
         char *src = evdev;
         char *dst;
-        switch (evdev_type & (~KBD_SET) & (~(MOUSE_SET << 1))) {
+        switch (evdev_type & (~KBD_SET) & (~MOUSE_SET)) {
         case EVDEV_KEYBOARD:
             dst = kbdevdev + EVDEVPOS;
             EVDEV_STRCPY(dst, src);
@@ -148,14 +156,14 @@ int main(int argc, char **argv)
     memcpy(av + 1, argv + 1, argc * sizeof(*av));
     argv = av + 1 + argc;
 
-    switch (KBD_SET | (MOUSE_SET << 1)) {
-    case 0:
+    switch (KBD_SET | MOUSE_SET) {
+    case EVDEV_NONE:
         fprintf(stderr, "Could not find any event devices\n"
                         "Is CONFIG_INPUT_EVDEV enabled in the kernel?\n");
         argv[0] = NULL;
         execvp("xinit", av);
     return 0;
-    case 1:
+    case EVDEV_KEYBOARD:
         fprintf(stderr, "Could not find mouse event device\n"
                         "Is a mouse plugged in?\n");
         argv[0] = "-keybd";
@@ -163,7 +171,7 @@ int main(int argc, char **argv)
         argv[2] = NULL;
         execvp("xinit", av);
     return 0;
-    case 2:
+    case EVDEV_MOUSE:
         fprintf(stderr, "Could not find keyboard event device\n"
                         "Is a keyboard plugged in?\n");
         argv[0] = "-mouse";
@@ -171,7 +179,7 @@ int main(int argc, char **argv)
         argv[2] = NULL;
         execvp("xinit", av);
     return 0;
-    case 3:
+    case EVDEV_KEYBOARD | EVDEV_MOUSE:
         argv[0] = "-mouse";
         argv[1] = mouseevdev;
         argv[2] = "-keybd";
